@@ -92,3 +92,10 @@ jobs:
         run: curl --fail-with-body -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=https://heiyin-tv-api.bekiuz67.workers.dev/telegram/webhook"
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      - name: Set Telegram chat menu button
+        run: |
+          curl --fail-with-body -sS -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setChatMenuButton" \
+            -H "Content-Type: application/json" \
+            -d '{"menu_button":{"type":"web_app","text":"🎬 HEIYIN TV","web_app":{"url":"https://heiyin-tv.pages.dev"}}}'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
