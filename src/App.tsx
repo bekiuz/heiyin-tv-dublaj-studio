@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
+type Episode = { id: number; episode_number: number; title: string; description: string; };
+type Season = { id: number; season_number: number; episodes: Episode[]; };
+type SerialData = { seasons: Season[]; };
+
 type Item = {
   id: number;
   title: string;
@@ -35,6 +39,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<Item | null>(null);
+  const [serialData, setSerialData] = useState<SerialData | null>(null);
+  const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileName, setProfileName] = useState(() => localStorage.getItem('heiyin-name') || '');
@@ -80,6 +86,16 @@ export default function App() {
   useEffect(() => { localStorage.setItem('heiyin-history', JSON.stringify(history)); }, [history]);
 
   useEffect(() => {
+    if (!selected || !['SERIAL', 'ANIME'].includes(selected.type.toUpperCase())) return;
+    const controller = new AbortController();
+    fetch(`${API}/api/serial/${selected.id}`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => { if (!controller.signal.aborted) setSerialData(data?.seasons?.length ? data : null); })
+      .catch(() => { if (!controller.signal.aborted) setSerialData(null); });
+    return () => controller.abort();
+  }, [selected]);
+
+  useEffect(() => {
     if (!selected) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setSelected(null);
@@ -90,7 +106,7 @@ export default function App() {
 
   const featured = items.find((item) => item.has_video) || items[0];
   const savedItems = items.filter((item) => saved.includes(item.id));
-  const openItem = (item: Item) => { setSelected(item); setHistory((prev) => [item.id, ...prev.filter((id) => id !== item.id)].slice(0, 30)); };
+  const openItem = (item: Item) => { setSelected(item); setSerialData(null); setSelectedEpisode(null); setHistory((prev) => [item.id, ...prev.filter((id) => id !== item.id)].slice(0, 30)); };
   const toggleSaved = (id: number) => setSaved((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]);
   const videoUrl = (item: Item) => item.video_url || `${API}/api/video/${item.id}`;
 
@@ -259,7 +275,8 @@ export default function App() {
               <p className="eyebrow">{typeLabel(selected.type)}{selected.year ? ` · ${selected.year}` : ''}</p>
               <h2 id="detail-title">{selected.title}</h2>
               <p>{selected.description || 'Ushbu asar haqida batafsil ma’lumot tez orada qo‘shiladi.'}</p>
-              {selected.has_video || selected.video_url ? <video className="detail-video" controls autoPlay playsInline src={videoUrl(selected)} /> : <span className="modal-note">Video manbasi hozircha mavjud emas.</span>}
+              {serialData?.seasons?.length ? <div className="episode-browser">{serialData.seasons.map((season) => <section className="season-block" key={season.id}><h3>{season.season_number}-fasl</h3><div className="episode-list">{season.episodes.map((episode) => <button className={selectedEpisode === episode.id ? 'episode-button active' : 'episode-button'} key={episode.id} onClick={() => setSelectedEpisode(episode.id)} type="button"><span>{episode.episode_number}-qism</span><b>▶</b></button>)}</div></section>)}</div> : null}
+              {selectedEpisode ? <video className="detail-video" controls autoPlay playsInline src={`${API}/api/episode/${selectedEpisode}`} /> : serialData?.seasons?.length ? <span className="modal-note">Ko‘rish uchun fasldan qism tanlang.</span> : selected.has_video || selected.video_url ? <video className="detail-video" controls autoPlay playsInline src={videoUrl(selected)} /> : <span className="modal-note">Video manbasi hozircha mavjud emas.</span>}
             <button className="save-modal" onClick={() => toggleSaved(selected.id)}>{saved.includes(selected.id) ? '♥ Saqlangan' : '♡ Saqlash'}</button>
             </div>
           </section>
