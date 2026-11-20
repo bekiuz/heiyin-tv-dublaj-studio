@@ -50,4 +50,4 @@ export default {async fetch(req:Request,env:Env):Promise<Response>{
 
  return Response.json({ok:true});}
  return new Response("Not found",{status:404});
-};
+}};
