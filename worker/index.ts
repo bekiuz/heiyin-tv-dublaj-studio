@@ -1,7 +1,8 @@
 export interface Env {
  TELEGRAM_BOT_TOKEN:string;
  TELEGRAM_WEBHOOK_SECRET?:string;
- TELEGRAM_ADMIN_ID?:string;\n TELEGRAM_CHANNEL_ID?:string;
+ TELEGRAM_ADMIN_ID?:string;
+ TELEGRAM_CHANNEL_ID?:string;
  WEB_URL?:string;
  DB?:D1Database;
 }
