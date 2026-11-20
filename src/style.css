@@ -193,3 +193,85 @@ button{color:inherit}
 .episode-button:hover,.episode-button.active{border-color:#a58be8;background:rgba(126,94,202,.2);color:#d9c9ff}
 .episode-button span{font-size:13px}
 .episode-button b{font-size:11px}
+
+
+/* HEIYIN TV — cinematic catalog refresh */
+:root{--bg:#08080d;--panel:#11111a;--line:rgba(255,255,255,.1);--muted:#9a98a8;--purple:#b69cff;--purple-strong:#8b5cf6;--text:#f5f2ff}
+body{background:#08080d}
+body:before{opacity:.35;background-size:84px 84px}
+.announcement{height:32px;background:#0e0d14;color:#aaa4ba;font-size:9px;letter-spacing:1.2px}
+.site-header{position:sticky;top:0;z-index:30;height:76px;padding:0 max(6%,calc((100% - 1320px)/2));background:rgba(8,8,13,.82);border-bottom:1px solid rgba(255,255,255,.07);backdrop-filter:blur(22px)}
+.logo{font-size:19px;letter-spacing:-.8px;font-weight:800}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#c4adff,#7045d6);box-shadow:0 5px 25px #8b5cf644}
+.site-header nav{gap:34px}
+.site-header nav a{font-size:12px;color:#aaa6b6;transition:.2s}
+.site-header nav a:hover,.site-header nav .nav-active{color:#fff}
+.header-cta{border:1px solid #ffffff19;background:#ffffff08;border-radius:999px;padding:7px 13px}
+.hero{max-width:1600px;margin:auto}
+.hero-cinematic{min-height:660px;padding:105px 9% 82px;grid-template-columns:1.05fr .95fr;gap:6%;background:radial-gradient(ellipse at 78% 38%,#39205d55,transparent 37%),linear-gradient(110deg,#09090f,#0c0a13 65%,#100d18)}
+.hero-overlay{background:linear-gradient(90deg,#08080d 0%,rgba(8,8,13,.9) 43%,rgba(8,8,13,.28) 100%),linear-gradient(0deg,#08080d,transparent 48%)}
+.hero-video{opacity:.16;filter:saturate(.65) blur(1px)}
+.hero-copy{position:relative;z-index:2;max-width:630px}
+.eyebrow{font-size:9px;letter-spacing:2px;color:#b9a7e9}
+.hero-copy .eyebrow{display:flex;align-items:center;gap:10px}
+.hero h1{font-size:clamp(54px,6vw,82px);line-height:1.02;letter-spacing:-5px;font-weight:800}
+.hero h1 span,.section-heading h2 span,.about-strip h2 span{color:#b49aff}
+.hero-description{max-width:440px;color:#a6a1b2;font-size:14px;line-height:1.9}
+.button-primary{display:inline-flex;align-items:center;gap:22px;padding:14px 19px;border-radius:9px;background:linear-gradient(120deg,#b49aff,#8056db);color:#100b1a;font-size:11px;font-weight:900;box-shadow:0 12px 35px #8b5cf633;transition:.2s}
+.button-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px #8b5cf655}
+.button-quiet{font-size:11px;color:#c4bdcf}
+.hero-meta{margin-top:50px}
+.hero-meta strong{font-size:22px;color:#eee8ff}
+.hero-meta span{color:#858092;font-size:9px}
+.hero-art{height:430px;position:relative;display:flex;align-items:center;justify-content:center;perspective:1000px}
+.hero-poster-frame{position:relative;width:min(330px,75%);height:430px;overflow:hidden;border:1px solid #d5c2ff55;border-radius:18px;background:linear-gradient(145deg,#302044,#111018);box-shadow:0 35px 100px #000b,0 0 90px #8956d933;transform:rotateY(-9deg) rotateZ(2deg)}
+.hero-poster-frame>img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-poster-fallback{height:100%;display:grid;place-items:center;font-size:180px;font-weight:900;color:#c7b5ff;background:radial-gradient(ellipse at 50% 40%,#49316d,#15121f 70%)}
+.hero-poster-shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%,rgba(7,6,12,.2) 45%,#08070eeF 100%)}
+.hero-poster-label{position:absolute;left:22px;right:22px;bottom:23px;display:grid;gap:8px}
+.hero-poster-label span{font-size:8px;letter-spacing:2px;color:#d0bfff}
+.hero-poster-label b{font-family:'Space Grotesk';font-size:27px;line-height:1.1}
+.hero-poster-label small{font-size:9px;letter-spacing:2px;color:#c3b9d4}
+.hero-float-note{position:absolute;right:2%;bottom:44px;padding:12px 16px;border:1px solid #ffffff20;border-radius:999px;background:#17131fdc;backdrop-filter:blur(15px);font-size:8px;letter-spacing:1.1px;color:#d9d0e9}
+.live-dot{display:inline-block;width:7px;height:7px;margin-right:8px;border-radius:50%;background:#9ce6bb;box-shadow:0 0 12px #9ce6bb}
+.video-rail-section,.saved-section{max-width:1320px;padding:54px 6%}
+.video-tile{min-height:190px;border-radius:14px;background:linear-gradient(145deg,#211a30,#111018 75%);padding:22px}
+.catalog-section{max-width:1440px;padding:100px 6% 110px}
+.section-heading h2{font-size:clamp(36px,4.2vw,54px);letter-spacing:-2.7px;margin:0}
+.section-subtitle{font-size:12px;color:#9691a2}
+.catalog-count strong{color:#c5b0ff}
+.catalog-toolbar{margin:38px 0 28px;padding:16px 0}
+.filter-button{padding:10px 17px;border-radius:999px;font-size:10px}
+.filter-button.active{background:#b49aff;color:#140d21;border-color:#b49aff}
+.search-box{height:44px;border-radius:999px;background:#111019;border-color:#ffffff18;padding:0 16px}
+.search-box input{font-size:11px}
+.content-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:22px}
+.content-card{border-radius:13px;background:#111018;border-color:#ffffff12;transition:transform .25s,border-color .25s,box-shadow .25s}
+.content-card:hover{transform:translateY(-7px);border-color:#b49aff66;box-shadow:0 24px 55px #0009}
+.poster{height:clamp(230px,27vw,330px);background:#171320}
+.poster:after{background:linear-gradient(180deg,transparent 48%,#09080ee8 100%)}
+.poster-index{top:14px;left:14px;padding:6px 8px;border-radius:6px;background:#08070c99;backdrop-filter:blur(8px)}
+.poster-type{left:14px;bottom:14px;padding:6px 9px;border-radius:999px;background:#100d19c9;border-color:#ffffff2c}
+.poster-play{width:38px;height:38px;right:14px;bottom:13px;background:#c1aaff}
+.card-details{padding:17px 17px 12px}
+.card-meta{font-size:9px;letter-spacing:.5px}
+.card-details h3{font-size:16px;margin:10px 0 8px}
+.card-details p{height:40px;font-size:10px;line-height:1.8;color:#8e899c}
+.card-more{margin-top:13px;padding-top:12px;color:#c6b2ff}
+.card-save-row{display:flex;align-items:center;justify-content:space-between;padding:0 16px 14px;color:#817b90;font-size:9px}
+.card-save-row .save-button{margin:0;padding:7px 10px;border-radius:999px;font-size:9px}
+.saved-section{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 auto 55px}
+.saved-section h2{font-size:34px}
+.about-strip{padding:65px 10%;background:radial-gradient(ellipse at 20% 50%,#55368a24,transparent 55%),#0d0c13}
+.about-mark{border-radius:18px;box-shadow:0 10px 35px #8b5cf622}
+.site-footer{max-width:1440px;margin:auto;padding:28px 6%}
+.detail-modal,.profile-modal{border-radius:20px;background:#12111a;border-color:#ffffff1a;box-shadow:0 35px 120px #000d}
+.detail-modal{width:min(850px,100%);grid-template-columns:280px 1fr;gap:30px;padding:30px}
+.modal-poster{height:360px;border-radius:12px}
+.modal-content h2{font-size:32px}
+.episode-browser{max-height:210px;overflow:auto;padding-right:4px}
+.episode-button{min-height:42px}
+.save-modal{border-radius:999px;padding:10px 16px}
+@media(max-width:1000px){.hero-cinematic{padding-left:7%;padding-right:7%;gap:2%}.content-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.poster{height:260px}}
+@media(max-width:700px){.announcement{height:30px;font-size:7px}.site-header{height:64px;padding:0 5%}.hero-cinematic{min-height:unset;padding:66px 6% 45px;grid-template-columns:1fr;gap:24px}.hero h1{font-size:clamp(48px,12vw,68px);letter-spacing:-3.5px}.hero-description{font-size:12px}.hero-meta{margin-top:32px}.hero-art{height:340px;margin-top:0}.hero-poster-frame{width:220px;height:310px}.hero-poster-label b{font-size:22px}.hero-float-note{right:0;bottom:12px;font-size:7px}.catalog-section{padding:65px 5% 75px}.section-heading h2{font-size:34px}.catalog-toolbar{gap:13px}.content-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.poster{height:clamp(190px,58vw,280px)}.card-details{padding:13px 12px 10px}.card-details h3{font-size:14px}.card-save-row{padding:0 12px 12px}.video-rail-section,.saved-section{padding:30px 5%}.detail-modal{grid-template-columns:100px 1fr;gap:14px;padding:17px}.modal-poster{height:150px}.modal-content h2{font-size:21px}.episode-list{grid-template-columns:repeat(2,minmax(0,1fr))}.about-strip{padding:38px 6%}}
+@media(max-width:380px){.poster{height:180px}.card-details p{font-size:9px}.card-save-row{font-size:8px}.card-save-row .save-button{font-size:8px;padding:6px 8px}}
