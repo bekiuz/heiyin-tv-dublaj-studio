@@ -119,7 +119,9 @@ export default function App() {
         <button className="header-cta profile-trigger" onClick={() => setProfileOpen(true)}><span className="avatar-small">{avatarUrl ? <img src={avatarUrl} alt="Profil" /> : (profileName[0]?.toUpperCase() || 'H')}</span>{profileName || 'Profil'} <span>⌄</span></button>
       </header>
 
-      <section className="hero hero-cinematic">\n        {featured?.has_video && <video className="hero-video" autoPlay muted loop playsInline src={videoUrl(featured)} />}\n        <div className="hero-overlay" />
+      <section className="hero hero-cinematic">
+        {featured?.has_video && <video className="hero-video" autoPlay muted loop playsInline src={videoUrl(featured)} />}
+        <div className="hero-overlay" />
         <div className="hero-glow hero-glow-one" />
         <div className="hero-glow hero-glow-two" />
         <div className="hero-copy">
@@ -158,7 +160,9 @@ export default function App() {
         </div>
       </section>
 
-      {items.some((item) => item.has_video) && <section className="video-rail-section"><div className="section-heading compact"><div><p className="eyebrow">HEIYIN VIDEO</p><h2>Video <span>premyeralar</span></h2></div></div><div className="video-rail">{items.filter((item) => item.has_video).slice(0, 6).map((item) => <button key={item.id} className="video-tile" onClick={() => openItem(item)}><span className="tile-play">▶</span><span className="tile-name">{item.title}</span><span className="tile-type">{typeLabel(item.type)}</span></button>)}</div></section>}\n\n      <section className="catalog-section" id="catalog">
+      {items.some((item) => item.has_video) && <section className="video-rail-section"><div className="section-heading compact"><div><p className="eyebrow">HEIYIN VIDEO</p><h2>Video <span>premyeralar</span></h2></div></div><div className="video-rail">{items.filter((item) => item.has_video).slice(0, 6).map((item) => <button key={item.id} className="video-tile" onClick={() => openItem(item)}><span className="tile-play">▶</span><span className="tile-name">{item.title}</span><span className="tile-type">{typeLabel(item.type)}</span></button>)}</div></section>}
+
+      <section className="catalog-section" id="catalog">
         <div className="section-heading">
           <div>
             <p className="eyebrow">HEIYIN LIBRARY</p>
@@ -216,7 +220,8 @@ export default function App() {
                   <div className="card-details">
                     <div className="card-meta"><span>{typeLabel(item.type)}</span>{item.year && <><i />{item.year}</>}</div>
                     <h3>{item.title}</h3>
-                    <p>{item.description || 'Ushbu asar haqida batafsil ma’lumot tez orada qo‘shiladi.'}</p>\n                <button className={saved.includes(item.id) ? 'save-button saved' : 'save-button'} type="button" onClick={(event) => { event.stopPropagation(); toggleSaved(item.id); }}>{saved.includes(item.id) ? '♥ Saqlangan' : '♡ Saqlash'}</button>
+                    <p>{item.description || 'Ushbu asar haqida batafsil ma’lumot tez orada qo‘shiladi.'}</p>
+                <button className={saved.includes(item.id) ? 'save-button saved' : 'save-button'} type="button" onClick={(event) => { event.stopPropagation(); toggleSaved(item.id); }}>{saved.includes(item.id) ? '♥ Saqlangan' : '♡ Saqlash'}</button>
                     <span className="card-more">Batafsil <b>↗</b></span>
                   </div>
                 </button>
@@ -226,7 +231,9 @@ export default function App() {
         )}
       </section>
 
-      <section className="saved-section" id="my-list"><div className="section-heading compact"><div><p className="eyebrow">PERSONAL LIBRARY</p><h2>Saqlangan <span>asarlar.</span></h2></div><button className="button-quiet" onClick={() => setProfileOpen(true)}>Profilim ↗</button></div><p className="section-subtitle">Keyin ko‘rish uchun saqlangan asarlaringiz.</p>{savedItems.length ? <div className="saved-chips">{savedItems.map((item) => <button key={item.id} onClick={() => openItem(item)}>{item.title} ↗</button>)}</div> : <p className="empty-saved">♡ Hozircha saqlangan asarlar yo‘q.</p>}</section>\n\n      <section className="about-strip" id="about">
+      <section className="saved-section" id="my-list"><div className="section-heading compact"><div><p className="eyebrow">PERSONAL LIBRARY</p><h2>Saqlangan <span>asarlar.</span></h2></div><button className="button-quiet" onClick={() => setProfileOpen(true)}>Profilim ↗</button></div><p className="section-subtitle">Keyin ko‘rish uchun saqlangan asarlaringiz.</p>{savedItems.length ? <div className="saved-chips">{savedItems.map((item) => <button key={item.id} onClick={() => openItem(item)}>{item.title} ↗</button>)}</div> : <p className="empty-saved">♡ Hozircha saqlangan asarlar yo‘q.</p>}</section>
+
+      <section className="about-strip" id="about">
         <div className="about-mark">H</div>
         <div><p className="eyebrow">BIZNING MAQSAD</p><h2>Yaxshi hikoyalar <span>birlashtiradi.</span></h2><p>HEIYIN TV — anime, film va seriallarni topish uchun yaratilgan yagona katalog.</p></div>
         <a href="#home" className="back-top" aria-label="Yuqoriga qaytish">↑</a>
@@ -238,7 +245,9 @@ export default function App() {
         <small>© 2026 HEIYIN TV</small>
       </footer>
 
-      {profileOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setProfileOpen(false); }}><section className="profile-modal" role="dialog" aria-modal="true"><button className="modal-close" onClick={() => setProfileOpen(false)}>×</button><p className="eyebrow">HEIYIN MEMBER</p><h2>Profil <span>sozlamalari.</span></h2><div className="profile-avatar">{avatarUrl ? <img src={avatarUrl} alt="Avatar"/> : (profileName[0]?.toUpperCase() || 'H')}</div><label className="profile-field">Ismingiz<input value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Profil nomi" /></label><label className="profile-field">Avatar URL<input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." /></label><div className="profile-stats"><div><strong>{saved.length}</strong><span>Saqlangan</span></div><div><strong>{history.length}</strong><span>Ko‘rilgan</span></div></div><div className="recent-list"><strong>Oxirgi ko‘rganlar</strong>{history.slice(0,5).map(id => { const item = items.find(x => x.id === id); return item ? <button key={id} onClick={() => { setProfileOpen(false); openItem(item); }}>{item.title} ↗</button> : null; })}</div><button className="button-primary profile-done" onClick={() => setProfileOpen(false)}>Saqlash va yopish</button><small className="local-note">Profil hozircha shu qurilmada saqlanadi.</small></section></div>}\n\n      {selected && (
+      {profileOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setProfileOpen(false); }}><section className="profile-modal" role="dialog" aria-modal="true"><button className="modal-close" onClick={() => setProfileOpen(false)}>×</button><p className="eyebrow">HEIYIN MEMBER</p><h2>Profil <span>sozlamalari.</span></h2><div className="profile-avatar">{avatarUrl ? <img src={avatarUrl} alt="Avatar"/> : (profileName[0]?.toUpperCase() || 'H')}</div><label className="profile-field">Ismingiz<input value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Profil nomi" /></label><label className="profile-field">Avatar URL<input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." /></label><div className="profile-stats"><div><strong>{saved.length}</strong><span>Saqlangan</span></div><div><strong>{history.length}</strong><span>Ko‘rilgan</span></div></div><div className="recent-list"><strong>Oxirgi ko‘rganlar</strong>{history.slice(0,5).map(id => { const item = items.find(x => x.id === id); return item ? <button key={id} onClick={() => { setProfileOpen(false); openItem(item); }}>{item.title} ↗</button> : null; })}</div><button className="button-primary profile-done" onClick={() => setProfileOpen(false)}>Saqlash va yopish</button><small className="local-note">Profil hozircha shu qurilmada saqlanadi.</small></section></div>}
+
+      {selected && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}>
           <section className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title">
             <button className="modal-close" onClick={() => setSelected(null)} type="button" aria-label="Yopish">×</button>
@@ -250,7 +259,8 @@ export default function App() {
               <p className="eyebrow">{typeLabel(selected.type)}{selected.year ? ` · ${selected.year}` : ''}</p>
               <h2 id="detail-title">{selected.title}</h2>
               <p>{selected.description || 'Ushbu asar haqida batafsil ma’lumot tez orada qo‘shiladi.'}</p>
-              {selected.has_video || selected.video_url ? <video className="detail-video" controls autoPlay playsInline src={videoUrl(selected)} /> : <span className="modal-note">Video manbasi hozircha mavjud emas.</span>}\n            <button className="save-modal" onClick={() => toggleSaved(selected.id)}>{saved.includes(selected.id) ? '♥ Saqlangan' : '♡ Saqlash'}</button>
+              {selected.has_video || selected.video_url ? <video className="detail-video" controls autoPlay playsInline src={videoUrl(selected)} /> : <span className="modal-note">Video manbasi hozircha mavjud emas.</span>}
+            <button className="save-modal" onClick={() => toggleSaved(selected.id)}>{saved.includes(selected.id) ? '♥ Saqlangan' : '♡ Saqlash'}</button>
             </div>
           </section>
         </div>
