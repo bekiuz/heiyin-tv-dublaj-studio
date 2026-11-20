@@ -106,6 +106,14 @@ export default function App() {
 
   const featured = items.find((item) => item.has_video) || items[0];
   const savedItems = items.filter((item) => saved.includes(item.id));
+  const watchedItems = history.map((id) => items.find((item) => item.id === id)).filter((item): item is Item => Boolean(item));
+  const shelfGroups = category === 'HAMMASI'
+    ? [
+        { title: 'Anime olami', subtitle: 'Eng qiziqarli anime hikoyalari', data: items.filter((item) => item.type.toUpperCase() === 'ANIME') },
+        { title: 'Filmlar', subtitle: 'Kechangiz uchun tanlangan filmlar', data: items.filter((item) => item.type.toUpperCase() === 'FILM') },
+        { title: 'Seriallar', subtitle: 'Keyingi qismni ko‘rishga tayyormisiz?', data: items.filter((item) => item.type.toUpperCase() === 'SERIAL') },
+      ].filter((group) => group.data.length)
+    : [{ title: categories.find((item) => item.value === category)?.label || 'Katalog', subtitle: 'Siz tanlagan bo‘lim', data: items }];
   const openItem = (item: Item) => { setSelected(item); setSerialData(null); setSelectedEpisode(null); setHistory((prev) => [item.id, ...prev.filter((id) => id !== item.id)].slice(0, 30)); };
   const toggleSaved = (id: number) => setSaved((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]);
   const videoUrl = (item: Item) => item.video_url || `${API}/api/video/${item.id}`;
@@ -114,6 +122,27 @@ export default function App() {
     if (loading) return 'Yuklanmoqda';
     return `${items.length} ta natija`;
   }, [items.length, loading]);
+
+  const renderShelf = (title: string, subtitle: string, shelfItems: Item[], ranked = false) => (
+    <section className="stream-shelf" key={title}>
+      <div className="shelf-heading"><div><h3>{title}</h3><p>{subtitle}</p></div><span>{shelfItems.length} ta</span></div>
+      <div className="shelf-track">
+        {shelfItems.map((item, index) => (
+          <article className="shelf-card" key={item.id}>
+            {ranked && <span className="rank-number">{index + 1}</span>}
+            <button className="shelf-poster" type="button" onClick={() => openItem(item)} aria-label={`${item.title} ni ochish`}>
+              <div className="poster-fallback"><span>H</span></div>
+              {item.poster_url && <img src={item.poster_url} alt={item.title} loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
+              <span className="shelf-play">▶</span>
+              <span className="shelf-kind">{typeLabel(item.type)}</span>
+            </button>
+            <div className="shelf-card-info"><button type="button" onClick={() => openItem(item)}>{item.title}</button><span>{item.year || 'HEIYIN TV'}</span></div>
+            <button className={saved.includes(item.id) ? 'shelf-save is-saved' : 'shelf-save'} type="button" onClick={() => toggleSaved(item.id)} aria-label="Saqlanganlarga qo‘shish">{saved.includes(item.id) ? '♥' : '+'}</button>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 
   return (
     <main id="home">
@@ -130,7 +159,7 @@ export default function App() {
         <nav aria-label="Asosiy navigatsiya">
           <a className="nav-active" href="#home">Bosh sahifa</a>
           <a href="#catalog">Katalog</a>
-          <a href="#about">Biz haqimizda</a>
+          <a href="#my-list">Mening ro‘yxatim</a>
         </nav>
         <button className="header-cta profile-trigger" onClick={() => setProfileOpen(true)}><span className="avatar-small">{avatarUrl ? <img src={avatarUrl} alt="Profil" /> : (profileName[0]?.toUpperCase() || 'H')}</span>{profileName || 'Profil'} <span>⌄</span></button>
       </header>
@@ -142,14 +171,12 @@ export default function App() {
         <div className="hero-glow hero-glow-two" />
         <div className="hero-copy">
           <p className="eyebrow"><span /> SIZNING YANGI SEVIMLI MAKONINGIZ</p>
-          <h1>Har bir hikoya<br />o‘z <span>olamiga</span> ega.</h1>
-          <p className="hero-description">
-            Sevimli anime, filmlar va seriallaringizni kashf eting.
-            Yangi sarguzashtlar shu yerdan boshlanadi.
-          </p>
+          <p className="hero-kicker">HEIYIN TV ORIGINAL TANLOVI</p>
+          <h1>{featured?.title || <>Har bir hikoya<br />o‘z <span>olamiga</span> ega.</>}</h1>
+          <p className="hero-description">{featured?.description || 'Sevimli anime, filmlar va seriallaringizni bir joyda tomosha qiling. Yangi sarguzashtlar shu yerdan boshlanadi.'}</p>
           <div className="hero-actions">
-            <a className="button-primary" href="#catalog">Katalogni ko‘rish <span>↓</span></a>
-            <a className="button-quiet" href="#about">HEIYIN TV haqida <span>↗</span></a>
+            {featured && <button className="button-primary" type="button" onClick={() => openItem(featured)}>▶ <span>Tomosha qilish</span></button>}
+            <a className="button-quiet" href="#catalog">＋ Katalogni ko‘rish</a>
           </div>
           <div className="hero-meta">
             <div><strong>01</strong><span>Yagona katalog</span></div>
@@ -216,27 +243,9 @@ export default function App() {
         ) : items.length === 0 ? (
           <div className="catalog-state"><span className="state-symbol">✦</span><strong>{query ? 'Hech narsa topilmadi' : 'Katalog hozircha bo‘sh'}</strong><p>{query ? 'Boshqa nom bilan qidirib ko‘ring yoki filtrni o‘zgartiring.' : 'Yangi anime, film va seriallar tez orada qo‘shiladi.'}</p>{query && <button className="retry-button" onClick={() => setQuery('')} type="button">Qidiruvni tozalash</button>}</div>
         ) : (
-          <div className="content-grid">
-            {items.map((item, index) => (
-              <article className="content-card" key={item.id}>
-                <button className="card-open" type="button" onClick={() => openItem(item)} aria-label={`${item.title} haqida batafsil`}>
-                  <div className="poster">
-                    <div className="poster-fallback"><span>H</span><small>HEIYIN TV</small></div>
-                    {item.poster_url && <img src={item.poster_url} alt={item.title} loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
-                    <span className="poster-index">{String(index + 1).padStart(2, '0')}</span>
-                    <span className="poster-play">{item.has_video ? '▶' : '↗'}</span>
-                    <span className="poster-type">{typeLabel(item.type)}</span>
-                  </div>
-                  <div className="card-details">
-                    <div className="card-meta"><span>{typeLabel(item.type)}</span>{item.year && <><i />{item.year}</>}</div>
-                    <h3>{item.title}</h3>
-                    <p>{item.description || 'Ushbu asar haqida batafsil ma’lumot tez orada qo‘shiladi.'}</p>
-                    <span className="card-more">Batafsil <b>↗</b></span>
-                  </div>
-                </button>
-                <div className="card-save-row"><span>{item.has_video ? '▶ Video mavjud' : 'HEIYIN TV'}</span><button className={saved.includes(item.id) ? 'save-button saved' : 'save-button'} type="button" onClick={() => toggleSaved(item.id)}>{saved.includes(item.id) ? '♥ Saqlangan' : '♡ Saqlash'}</button></div>
-              </article>
-            ))}
+          <div className="streaming-catalog">
+            {watchedItems.length > 0 && renderShelf('Ko‘rishni davom ettiring', 'Avval ochgan asarlaringiz', watchedItems)}
+            {shelfGroups.map((group) => renderShelf(group.title, group.subtitle, group.data, group.title === 'Anime olami'))}
           </div>
         )}
       </section>
