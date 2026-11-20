@@ -5,86 +5,46 @@ export interface Env {
  WEB_URL?:string;
  DB?:D1Database;
 }
-type TgMessage={chat:{id:number};text?:string;caption?:string;video?:{file_id:string};document?:{file_id:string;mime_type?:string};};
-type TgUpdate={message?:TgMessage};
+type TgUser={id:number;username?:string;first_name?:string};
+type TgMessage={chat:{id:number};from?:TgUser;text?:string;caption?:string;video?:{file_id:string};document?:{file_id:string;mime_type?:string};};
+type TgUpdate={message?:TgMessage;callback_query?:{id:string;from:TgUser;message?:{chat:{id:number}};data?:string}};
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"GET,POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type,Range","Access-Control-Expose-Headers":"Content-Length,Content-Range,Accept-Ranges"};
-async function send(env:Env,chat_id:number,text:string,keyboard?:unknown){
- return fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({chat_id,text,...(keyboard?{reply_markup:keyboard}:{})})});
-}
-function parseCaption(caption:string){
- const parts=caption.split('|').map(x=>x.trim());
- const type=(parts[0]||'ANIME').toUpperCase();
- return {type:['ANIME','FILM','SERIAL'].includes(type)?type:'ANIME',title:parts[1]||'Telegram video',year:Number(parts[2])||null,description:parts.slice(3).join('|')||caption||''};
-}
+const userMenu={inline_keyboard:[[{text:"🎬 Katalog",url:"https://heiyin-tv.pages.dev/#catalog"},{text:"🔍 Qidirish",callback_data:"search"}],[{text:"👑 VIP olish",callback_data:"vip"},{text:"⭐ VIP kontent",callback_data:"vipcontent"}],[{text:"👤 Profilim",callback_data:"profile"},{text:"📚 Saqlanganlar",url:"https://heiyin-tv.pages.dev/#my-list"}],[{text:"📩 Yordam",callback_data:"help"}]]};
+const adminMenu={inline_keyboard:[[{text:"📊 Statistika",callback_data:"admin:stats"},{text:"👥 Foydalanuvchilar",callback_data:"admin:users"}],[{text:"👑 VIP so‘rovlari",callback_data:"admin:requests"},{text:"🎬 Video qo‘shish",callback_data:"admin:video"}],[{text:"🌐 Sayt",url:"https://heiyin-tv.pages.dev"}]]};
+async function send(env:Env,chat_id:number,text:string,keyboard?:unknown){return fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({chat_id,text,reply_markup:keyboard?keyboard:{remove_keyboard:true}})});}
+async function edit(env:Env,chat_id:number,message_id:number,text:string,keyboard?:unknown){return fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/editMessageText`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({chat_id,message_id,text,reply_markup:keyboard})});}
+async function answer(env:Env,id:string,text=""){return fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({callback_query_id:id,text})});}
+function parseCaption(caption:string){const parts=caption.split("|").map(x=>x.trim());const type=(parts[0]||"ANIME").toUpperCase();return{type:["ANIME","FILM","SERIAL"].includes(type)?type:"ANIME",title:parts[1]||"Telegram video",year:Number(parts[2])||null,description:parts.slice(3).join("|")||caption||""};}
+function isAdmin(env:Env,id:number){return !!env.TELEGRAM_ADMIN_ID&&String(id)===env.TELEGRAM_ADMIN_ID;}
+async function vipStatus(env:Env,id:number){if(!env.DB)return null;const row=await env.DB.prepare("SELECT expires_at FROM vip_subscriptions WHERE telegram_id=?").bind(id).first<{expires_at:string}>();if(!row)return null;return new Date(row.expires_at)>new Date()?row.expires_at:null;}
+async function profile(env:Env,chat:number,user:TgUser){const expiry=await vipStatus(env,user.id);await send(env,chat,`👤 PROFIL\n\n🆔 ID: ${user.id}\n👋 ${user.first_name||"Foydalanuvchi"}\n👑 VIP: ${expiry?"Faol":"Faol emas"}${expiry?"\n📅 Tugash: "+new Date(expiry).toLocaleDateString("uz-UZ"):""}`,{inline_keyboard:[[{text:"👑 VIP olish",callback_data:"vip"}],[{text:"⬅️ Menyu",callback_data:"menu"}]]});}
+async function vipOffer(env:Env,chat:number,id:number){const active=await vipStatus(env,id);if(active){await send(env,chat,`👑 Sizda VIP faol!\n📅 Tugash: ${new Date(active).toLocaleDateString("uz-UZ"}`,{inline_keyboard:[[{text:"⬅️ Menyu",callback_data:"menu"}]]});return;}await send(env,chat,"👑 HEIYIN VIP\n\nVIP obunasi bilan maxsus kontent va yangiliklardan foydalaning. Tarif va to‘lov bo‘yicha admin bilan bog‘lanish uchun so‘rov yuboring.",{inline_keyboard:[[{text:"👑 30 kunlik VIP so‘rash",callback_data:"viprequest:30"}],[{text:"👑 90 kunlik VIP so‘rash",callback_data:"viprequest:90"}],[{text:"⬅️ Menyu",callback_data:"menu"}]]});}
 export default {async fetch(req:Request,env:Env):Promise<Response>{
  const url=new URL(req.url);
- if(req.method==='OPTIONS')return new Response(null,{headers:cors});
- if(url.pathname==='/health')return Response.json({ok:true,service:'HEIYIN TV API',database:!!env.DB},{headers:cors});
- if(url.pathname==='/api/catalog'&&req.method==='GET'){
-  if(!env.DB)return Response.json({ok:false,error:'D1 database is not bound'},{status:500,headers:cors});
-  const q=(url.searchParams.get('q')||'').trim();
-  const type=(url.searchParams.get('type')||'').trim().toUpperCase();
-  let sql='SELECT id,title,type,year,description,poster_url,video_url,featured,CASE WHEN video_file_id IS NOT NULL AND video_file_id != \'\' THEN 1 ELSE 0 END AS has_video FROM titles WHERE 1=1';
-  const params:(string|number)[]=[];
-  if(q){sql+=' AND title LIKE ?';params.push('%'+q+'%');}
-  if(type&&type!=='HAMMASI'){sql+=' AND UPPER(type)=?';params.push(type);}
-  sql+=' ORDER BY featured DESC, created_at DESC LIMIT 100';
-  const result=await env.DB.prepare(sql).bind(...params).all();
-  return Response.json({ok:true,results:result.results||[]},{headers:cors});
- }
- if(url.pathname.startsWith('/api/video/')&&req.method==='GET'){
-  if(!env.DB||!env.TELEGRAM_BOT_TOKEN)return new Response('Video service unavailable',{status:503,headers:cors});
-  const id=Number(url.pathname.split('/').pop());
-  if(!Number.isInteger(id)||id<1)return new Response('Invalid video id',{status:400,headers:cors});
-  const row=await env.DB.prepare('SELECT video_file_id,video_url FROM titles WHERE id=?').bind(id).first<{video_file_id:string;video_url:string}>();
-  if(!row)return new Response('Video not found',{status:404,headers:cors});
-  if(row.video_url)return Response.redirect(row.video_url,302);
-  if(!row.video_file_id)return new Response('No video attached',{status:404,headers:cors});
-  const fileInfo=await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${encodeURIComponent(row.video_file_id)}`);
-  if(!fileInfo.ok)return new Response('Telegram file lookup failed',{status:502,headers:cors});
-  const info:any=await fileInfo.json();
-  const path=info?.result?.file_path;
-  if(!path)return new Response('Video file unavailable',{status:502,headers:cors});
-  const headers=new Headers();
-  const range=req.headers.get('Range');
-  if(range)headers.set('Range',range);
-  const video=await fetch(`https://api.telegram.org/file/bot${env.TELEGRAM_BOT_TOKEN}/${path}`,{headers});
-  const outHeaders=new Headers(cors);
-  outHeaders.set('Content-Type',video.headers.get('Content-Type')||'video/mp4');
-  outHeaders.set('Accept-Ranges',video.headers.get('Accept-Ranges')||'bytes');
-  for(const key of ['Content-Length','Content-Range']){const value=video.headers.get(key);if(value)outHeaders.set(key,value);}
-  return new Response(video.body,{status:video.status,headers:outHeaders});
- }
- if(url.pathname==='/telegram/webhook'&&req.method==='POST'){
-  if(env.TELEGRAM_WEBHOOK_SECRET&&req.headers.get('x-telegram-bot-api-secret-token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
-  const update=await req.json() as TgUpdate;const msg=update.message;if(!msg?.chat?.id)return Response.json({ok:true});
-  const chat=msg.chat.id;const text=(msg.text||'').trim();
-  if(!env.TELEGRAM_BOT_TOKEN)return Response.json({ok:false,error:'Telegram token missing'},{status:500});
-  if(text==='/start')await send(env,chat,'🎬 HEIYIN TV\nAnime, film va serial katalogi.\n\nVideo yuborsangiz, u sayt katalogiga qo‘shiladi. Caption format:\nANIME | Nomi | 2026 | Tavsif\n\nFILM yoki SERIAL ham yozishingiz mumkin.',{inline_keyboard:[[{text:'🌐 Sayt',url:env.WEB_URL||'https://heiyin-tv.pages.dev'}]]});
-  else if(text==='/help')await send(env,chat,'🎞 Video yuborish: videoga caption yozing.\nANIME | Nomi | yil | tavsif\nFILM | Nomi | yil | tavsif\nSERIAL | Nomi | yil | tavsif\n\n/start — boshlash');
-  else if(msg.video||(msg.document?.mime_type||'').startsWith('video/')){
-   if(!env.DB){await send(env,chat,'Katalog bazasi hozir ulanmagan.');}
-   else if(env.TELEGRAM_ADMIN_ID&&String(chat)!==env.TELEGRAM_ADMIN_ID){await send(env,chat,'Video qo‘shish faqat administrator uchun.');}
-   else {
-    const fileId=msg.video?.file_id||msg.document?.file_id;
-    const meta=parseCaption(msg.caption||'');
-    if(!fileId)await send(env,chat,'Video faylni aniqlay olmadim.');
-    else {
-     const result=await env.DB.prepare('INSERT INTO titles(title,type,year,description,poster_url,video_file_id,featured) VALUES(?,?,?,?,?,?,0)').bind(meta.title,meta.type,meta.year,meta.description,'',fileId).run();
-     await send(env,chat,`✅ HEIYIN TV katalogiga qo‘shildi!\n🎬 ${meta.title}\n📂 ${meta.type}\n\nSayt katalogida ko‘rinishi mumkin.`);
-    }
-   }
-  }
-  else if(text){
-   if(!env.DB)await send(env,chat,'Katalog bazasi hozir ulanmagan.');
-   else {
-    const result=await env.DB.prepare('SELECT title,type,year,description FROM titles WHERE title LIKE ? LIMIT 10').bind('%'+text+'%').all();
-    const rows=result.results||[];
-    if(rows.length)await send(env,chat,'🔎 Qidiruv natijalari:\n\n'+rows.map((x:any)=>'🎬 '+x.title+' ('+x.type+(x.year?', '+x.year:'')+')\n'+(x.description||'')).join('\n\n'));
-    else await send(env,chat,'🔎 "'+text+'" bo‘yicha topilmadi. Boshqa nom bilan urinib ko‘ring.');
-   }
-  }
-  return Response.json({ok:true});
- }
- return new Response('Not found',{status:404});
+ if(req.method==="OPTIONS")return new Response(null,{headers:cors});
+ if(url.pathname==="/health")return Response.json({ok:true,service:"HEIYIN TV API",database:!!env.DB},{headers:cors});
+ if(url.pathname==="/api/catalog"&&req.method==="GET"){if(!env.DB)return Response.json({ok:false,error:"D1 database is not bound"},{status:500,headers:cors});const q=(url.searchParams.get("q")||"").trim();const type=(url.searchParams.get("type")||"").trim().toUpperCase();let sql="SELECT id,title,type,year,description,poster_url,video_url,featured,CASE WHEN video_file_id IS NOT NULL AND video_file_id != '' THEN 1 ELSE 0 END AS has_video FROM titles WHERE 1=1";const params:(string|number)[]=[];if(q){sql+=" AND title LIKE ?";params.push("%"+q+"%");}if(type&&type!=="HAMMASI"){sql+=" AND UPPER(type)=?";params.push(type);}sql+=" ORDER BY featured DESC, created_at DESC LIMIT 100";const result=await env.DB.prepare(sql).bind(...params).all();return Response.json({ok:true,results:result.results||[]},{headers:cors});}
+ if(url.pathname.startsWith("/api/video/")&&req.method==="GET"){if(!env.DB||!env.TELEGRAM_BOT_TOKEN)return new Response("Video service unavailable",{status:503,headers:cors});const id=Number(url.pathname.split("/").pop());if(!Number.isInteger(id)||id<1)return new Response("Invalid video id",{status:400,headers:cors});const row=await env.DB.prepare("SELECT video_file_id,video_url FROM titles WHERE id=?").bind(id).first<{video_file_id:string;video_url:string}>();if(!row)return new Response("Video not found",{status:404,headers:cors});if(row.video_url)return Response.redirect(row.video_url,302);if(!row.video_file_id)return new Response("No video attached",{status:404,headers:cors});const infoRes=await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${encodeURIComponent(row.video_file_id)}`);if(!infoRes.ok)return new Response("Telegram file lookup failed",{status:502,headers:cors});const info:any=await infoRes.json();const path=info?.result?.file_path;if(!path)return new Response("Video file unavailable",{status:502,headers:cors});const h=new Headers();const range=req.headers.get("Range");if(range)h.set("Range",range);const video=await fetch(`https://api.telegram.org/file/bot${env.TELEGRAM_BOT_TOKEN}/${path}`,{headers:h});const out=new Headers(cors);out.set("Content-Type",video.headers.get("Content-Type")||"video/mp4");out.set("Accept-Ranges",video.headers.get("Accept-Ranges")||"bytes");for(const key of ["Content-Length","Content-Range"]){const v=video.headers.get(key);if(v)out.set(key,v);}return new Response(video.body,{status:video.status,headers:out});}
+ if(url.pathname==="/telegram/webhook"&&req.method==="POST"){if(env.TELEGRAM_WEBHOOK_SECRET&&req.headers.get("x-telegram-bot-api-secret-token")!==env.TELEGRAM_WEBHOOK_SECRET)return new Response("Unauthorized",{status:401});const update=await req.json() as TgUpdate;const msg=update.message;const cb=update.callback_query;if(!env.TELEGRAM_BOT_TOKEN)return Response.json({ok:false,error:"Telegram token missing"},{status:500});
+ if(cb){const chat=cb.message?.chat.id;const data=cb.data||"";const uid=cb.from.id;const admin=isAdmin(env,uid);if(!chat){await answer(env,cb.id);return Response.json({ok:true});}
+ if(data==="menu"){await answer(env,cb.id);await send(env,chat,"🎬 HEIYIN TV — asosiy menyu",admin?adminMenu:userMenu);return Response.json({ok:true});}
+ if(data==="vip"){await answer(env,cb.id);await vipOffer(env,chat,uid);return Response.json({ok:true});}
+ if(data==="profile"){await answer(env,cb.id);await profile(env,chat,cb.from);return Response.json({ok:true});}
+ if(data==="vipcontent"){const exp=await vipStatus(env,uid);await answer(env,cb.id);await send(env,chat,exp?"⭐ VIP status faol. VIP kontent bo‘limi yangilanmoqda.":"🔒 VIP kontentga kirish uchun VIP obuna kerak.",{inline_keyboard:exp?[[{text:"⬅️ Menyu",callback_data:"menu"}]]:[[ {text:"👑 VIP olish",callback_data:"vip"}],[{text:"⬅️ Menyu",callback_data:"menu"}]]});return Response.json({ok:true});}
+ if(data==="search"){await answer(env,cb.id);await send(env,chat,"🔎 Qidirish uchun anime, film yoki serial nomini yozing. Men katalogdan qidiraman.",{inline_keyboard:[[{text:"⬅️ Menyu",callback_data:"menu"}]]});return Response.json({ok:true});}
+ if(data==="help"){await answer(env,cb.id);await send(env,chat,"📩 Yordam\n\nKatalogdan qidirish uchun nomini yozing. Video qo‘shish faqat admin uchun. VIP bo‘yicha 👑 VIP olish tugmasidan so‘rov yuboring.",{inline_keyboard:[[{text:"⬅️ Menyu",callback_data:"menu"}]]});return Response.json({ok:true});}
+ if(data.startsWith("viprequest:")){const days=Number(data.split(":")[1]);if(![30,90].includes(days)||!env.DB){await answer(env,cb.id,"So‘rovni yuborib bo‘lmadi");return Response.json({ok:true});}const pending=await env.DB.prepare("SELECT id FROM vip_requests WHERE telegram_id=? AND status='pending' LIMIT 1").bind(uid).first<{id:number}>();if(pending){await answer(env,cb.id,"Sizda allaqachon kutilayotgan so‘rov bor");await send(env,chat,"⏳ VIP so‘rovingiz admin ko‘rib chiqishini kutmoqda.");return Response.json({ok:true});}const ins=await env.DB.prepare("INSERT INTO vip_requests(telegram_id,duration_days,status) VALUES(?,?,'pending')").bind(uid,days).run();const reqId=ins.meta.last_row_id;await answer(env,cb.id,"VIP so‘rov yuborildi");await send(env,chat,"✅ VIP so‘rovingiz admin ga yuborildi. Tasdiqlangach sizga xabar beriladi.");if(env.TELEGRAM_ADMIN_ID){await send(env,Number(env.TELEGRAM_ADMIN_ID),`👑 Yangi VIP so‘rovi #${reqId}\n👤 ${cb.from.first_name||"User"}\n🆔 ${uid}\n📆 ${days} kun`,{inline_keyboard:[[{text:"✅ Tasdiqlash",callback_data:`vipapprove:${reqId}`},{text:"❌ Rad etish",callback_data:`vipreject:${reqId}`}]]});}return Response.json({ok:true});}
+ if(data.startsWith("vipapprove:")||data.startsWith("vipreject:")){if(!admin||!env.DB){await answer(env,cb.id,"Admin uchun");return Response.json({ok:true});}const [action,idStr]=data.split(":");const id=Number(idStr);const request=await env.DB.prepare("SELECT id,telegram_id,duration_days,status FROM vip_requests WHERE id=?").bind(id).first<{id:number;telegram_id:number;duration_days:number;status:string}>();if(!request||request.status!=="pending"){await answer(env,cb.id,"So‘rov topilmadi yoki oldin ko‘rilgan");return Response.json({ok:true});}if(action==="vipreject"){await env.DB.prepare("UPDATE vip_requests SET status='rejected' WHERE id=?").bind(id).run();await send(env,request.telegram_id,"❌ VIP so‘rovingiz rad etildi. Qo‘shimcha ma’lumot uchun admin bilan bog‘laning.");await answer(env,cb.id,"Rad etildi");if(cb.message)await edit(env,chat,0,"");return Response.json({ok:true});}const current=await env.DB.prepare("SELECT expires_at FROM vip_subscriptions WHERE telegram_id=?").bind(request.telegram_id).first<{expires_at:string}>();const base=current&&new Date(current.expires_at)>new Date()?new Date(current.expires_at):new Date();base.setDate(base.getDate()+request.duration_days);const expiry=base.toISOString();await env.DB.prepare("INSERT INTO vip_subscriptions(telegram_id,expires_at,updated_at) VALUES(?,?,CURRENT_TIMESTAMP) ON CONFLICT(telegram_id) DO UPDATE SET expires_at=excluded.expires_at,updated_at=CURRENT_TIMESTAMP").bind(request.telegram_id,expiry).run();await env.DB.prepare("UPDATE vip_requests SET status='approved' WHERE id=?").bind(id).run();await send(env,request.telegram_id,`🎉 VIP obunangiz faollashtirildi!\n📆 ${request.duration_days} kun\n📅 Tugash: ${new Date(expiry).toLocaleDateString("uz-UZ")}`,{inline_keyboard:[[{text:"⭐ VIP kontent",callback_data:"vipcontent"}],[{text:"👤 Profilim",callback_data:"profile"}]]});await answer(env,cb.id,"VIP faollashtirildi");if(cb.message)await edit(env,chat,cb.message.message_id,`✅ #${id} VIP tasdiqlandi — ${request.duration_days} kun`);return Response.json({ok:true});}
+ if(data.startsWith("admin:")){if(!admin){await answer(env,cb.id,"Admin ruxsati kerak");return Response.json({ok:true});}if(!env.DB){await answer(env,cb.id,"DB mavjud emas");return Response.json({ok:true});}if(data==="admin:stats"){const total=await env.DB.prepare("SELECT COUNT(*) AS n FROM bot_users").first<{n:number}>();const vip=await env.DB.prepare("SELECT COUNT(*) AS n FROM vip_subscriptions WHERE expires_at > datetime('now')").first<{n:number}>();const titles=await env.DB.prepare("SELECT COUNT(*) AS n FROM titles").first<{n:number}>();await answer(env,cb.id);await send(env,chat,`📊 HEIYIN TV STATISTIKA\n\n👥 Foydalanuvchilar: ${total?.n||0}\n👑 Faol VIP: ${vip?.n||0}\n🎬 Katalog: ${titles?.n||0}`,{inline_keyboard:[[{text:"⬅️ Admin panel",callback_data:"menu"}]]});}else if(data==="admin:users"){const total=await env.DB.prepare("SELECT COUNT(*) AS n FROM bot_users").first<{n:number}>();await answer(env,cb.id);await send(env,chat,`👥 Bot foydalanuvchilari: ${total?.n||0}`,{inline_keyboard:[[{text:"⬅️ Admin panel",callback_data:"menu"}]]});}else if(data==="admin:requests"){const reqs=await env.DB.prepare("SELECT id,telegram_id,duration_days FROM vip_requests WHERE status='pending' ORDER BY id DESC LIMIT 10").all<any>();await answer(env,cb.id);const rows=reqs.results||[];if(!rows.length)await send(env,chat,"⏳ Kutilayotgan VIP so‘rovlari yo‘q.",{inline_keyboard:[[{text:"⬅️ Admin panel",callback_data:"menu"}]]});else for(const r of rows)await send(env,chat,`👑 So‘rov #${r.id}\n🆔 ${r.telegram_id}\n📆 ${r.duration_days} kun`,{inline_keyboard:[[{text:"✅ Tasdiqlash",callback_data:`vipapprove:${r.id}`},{text:"❌ Rad etish",callback_data:`vipreject:${r.id}`}]]});}else if(data==="admin:video"){await answer(env,cb.id);await send(env,chat,"🎬 Video qo‘shish\n\nVideoni caption bilan yuboring:\nANIME | Nomi | yil | tavsif\nFILM | Nomi | yil | tavsif\nSERIAL | Nomi | yil | tavsif",{inline_keyboard:[[{text:"⬅️ Admin panel",callback_data:"menu"}]]});}return Response.json({ok:true});}
+ await answer(env,cb.id,"");return Response.json({ok:true});}
+ if(!msg?.chat?.id)return Response.json({ok:true});const chat=msg.chat.id;const user=msg.from;const text=(msg.text||"").trim();if(env.DB&&user)await env.DB.prepare("INSERT INTO bot_users(telegram_id,username,first_name) VALUES(?,?,?) ON CONFLICT(telegram_id) DO UPDATE SET username=excluded.username,first_name=excluded.first_name").bind(user.id,user.username||"",user.first_name||"").run();
+ if(text==="/start"){await send(env,chat,`🎬 HEIYIN TV\n\nAnime, film va seriallar katalogiga xush kelibsiz, ${user?.first_name||""}!\nKerakli bo‘limni tugmalar orqali tanlang.`,isAdmin(env,user?.id||0)?adminMenu:userMenu);}
+ else if(text==="/admin"){if(isAdmin(env,user?.id||0))await send(env,chat,"⚙️ Admin boshqaruv paneli",adminMenu);else await send(env,chat,"⛔ Bu bo‘lim admin uchun.");}
+ else if(text==="/vip"){await vipOffer(env,chat,user?.id||chat);}
+ else if(text==="/profile"){if(user)await profile(env,chat,user);}
+ else if(text==="/help"){await send(env,chat,"📩 Yordam: katalog nomini yozib qidiring. VIP uchun /vip. Profil uchun /profile.",{inline_keyboard:[[{text:"⬅️ Menyu",callback_data:"menu"}]]});}
+ else if(msg.video||(msg.document?.mime_type||"").startsWith("video/")){if(!env.DB)await send(env,chat,"Baza ulanmagan.");else if(!isAdmin(env,user?.id||0))await send(env,chat,"Video qo‘shish faqat administrator uchun.");else{const fileId=msg.video?.file_id||msg.document?.file_id;const meta=parseCaption(msg.caption||"");if(!fileId)await send(env,chat,"Video aniqlanmadi.");else{await env.DB.prepare("INSERT INTO titles(title,type,year,description,poster_url,video_file_id,featured) VALUES(?,?,?,?,?,?,0)").bind(meta.title,meta.type,meta.year,meta.description,"",fileId).run();await send(env,chat,`✅ Katalogga qo‘shildi\n🎬 ${meta.title}\n📂 ${meta.type}`,{inline_keyboard:[[{text:"🌐 Sayt katalogi",url:"https://heiyin-tv.pages.dev/#catalog"}],[{text:"⬅️ Admin panel",callback_data:"menu"}]]});}}}
+ else if(text){if(!env.DB)await send(env,chat,"Katalog bazasi ulanmagan.");else{const result=await env.DB.prepare("SELECT title,type,year,description FROM titles WHERE title LIKE ? LIMIT 10").bind("%"+text+"%").all();const rows=result.results||[];if(rows.length)await send(env,chat,"🔎 Qidiruv natijalari:\n\n"+rows.map((x:any)=>"🎬 "+x.title+" ("+x.type+(x.year?", "+x.year:"")+")\n"+(x.description||"")).join("\n\n"),{inline_keyboard:[[{text:"🌐 Katalogni ochish",url:"https://heiyin-tv.pages.dev/#catalog"}],[{text:"⬅️ Menyu",callback_data:"menu"}]]});else await send(env,chat,`🔎 "${text}" bo‘yicha topilmadi.`,{inline_keyboard:[[{text:"⬅️ Menyu",callback_data:"menu"}]]});}}
+ return Response.json({ok:true});}
+ return new Response("Not found",{status:404});
 }};
