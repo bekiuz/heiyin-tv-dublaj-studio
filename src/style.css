@@ -183,3 +183,13 @@ button{color:inherit}
 .player-modal{width:min(900px,calc(100vw - 24px));padding:24px}
 @media(max-width:780px){.video-rail{grid-template-columns:1fr 1fr}.video-rail-section,.saved-section{padding:28px 18px}.hero-cinematic{min-height:560px}.hero-video{opacity:.18}.profile-trigger{padding:6px 10px}.profile-trigger>span:nth-child(2){display:none}}
 @media(max-width:520px){.video-rail{grid-template-columns:1fr}.video-tile{min-height:140px}.profile-modal{padding:22px}.player-modal{padding:15px}}
+
+/* Season and episode browser */
+.episode-browser{display:grid;gap:14px;margin:18px 0}
+.season-block{border:1px solid rgba(157,138,216,.22);background:rgba(157,138,216,.06);border-radius:14px;padding:14px}
+.season-block h3{margin:0 0 12px;font-size:15px;color:var(--text)}
+.episode-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.episode-button{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid rgba(157,138,216,.24);border-radius:9px;padding:10px 12px;background:rgba(20,18,31,.75);color:var(--text);cursor:pointer;transition:.18s}
+.episode-button:hover,.episode-button.active{border-color:#a58be8;background:rgba(126,94,202,.2);color:#d9c9ff}
+.episode-button span{font-size:13px}
+.episode-button b{font-size:11px}
