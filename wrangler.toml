@@ -1,0 +1,11 @@
+name = "heiyin-tv-api"
+main = "worker/index.ts"
+compatibility_date = "2026-11-20"
+
+[vars]
+WEB_URL = "https://heiyin-tv.pages.dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "heiyin-tv"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
