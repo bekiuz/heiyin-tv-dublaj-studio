@@ -160,19 +160,13 @@ export default function App() {
           </div>
         </div>
 
-        <div className="hero-art" aria-hidden="true">
-          <div className="art-orbit orbit-one" />
-          <div className="art-orbit orbit-two" />
-          <div className="art-main-card">
-            <div className="art-topline"><span>HEIYIN ORIGINAL</span><span>✦ 01</span></div>
-            <div className="art-emblem"><span>H</span></div>
-            <div className="art-bottom">
-              <span>YOUR NEXT STORY</span>
-              <strong>BEGINS HERE.</strong>
-            </div>
+        <div className="hero-art">
+          <div className="hero-poster-frame">
+            {featured?.poster_url ? <img src={featured.poster_url} alt={featured.title} /> : <div className="hero-poster-fallback">H</div>}
+            <div className="hero-poster-shade" />
+            <div className="hero-poster-label"><span>HEIYIN TV PREMIERE</span><b>{featured?.title || 'YANGI OLAMLAR'}</b><small>{featured ? typeLabel(featured.type) : 'ANIME · FILM · SERIAL'}</small></div>
           </div>
-          <div className="floating-chip chip-top">✦ Yangi olamlar</div>
-          <div className="floating-chip chip-bottom"><span>●</span> Discover something new</div>
+          <div className="hero-float-note"><span className="live-dot" /> TOMOSHA QILISHGA TAYYOR</div>
         </div>
       </section>
 
@@ -237,10 +231,10 @@ export default function App() {
                     <div className="card-meta"><span>{typeLabel(item.type)}</span>{item.year && <><i />{item.year}</>}</div>
                     <h3>{item.title}</h3>
                     <p>{item.description || 'Ushbu asar haqida batafsil ma’lumot tez orada qo‘shiladi.'}</p>
-                <button className={saved.includes(item.id) ? 'save-button saved' : 'save-button'} type="button" onClick={(event) => { event.stopPropagation(); toggleSaved(item.id); }}>{saved.includes(item.id) ? '♥ Saqlangan' : '♡ Saqlash'}</button>
                     <span className="card-more">Batafsil <b>↗</b></span>
                   </div>
                 </button>
+                <div className="card-save-row"><span>{item.has_video ? '▶ Video mavjud' : 'HEIYIN TV'}</span><button className={saved.includes(item.id) ? 'save-button saved' : 'save-button'} type="button" onClick={() => toggleSaved(item.id)}>{saved.includes(item.id) ? '♥ Saqlangan' : '♡ Saqlash'}</button></div>
               </article>
             ))}
           </div>
