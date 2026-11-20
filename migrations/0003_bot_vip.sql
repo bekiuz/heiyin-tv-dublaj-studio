@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS bot_users (
+  telegram_id INTEGER PRIMARY KEY,
+  username TEXT DEFAULT '',
+  first_name TEXT DEFAULT '',
+  joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS vip_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  telegram_id INTEGER NOT NULL,
+  duration_days INTEGER NOT NULL DEFAULT 30,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS vip_subscriptions (
+  telegram_id INTEGER PRIMARY KEY,
+  expires_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS vip_requests_status_idx ON vip_requests(status);
