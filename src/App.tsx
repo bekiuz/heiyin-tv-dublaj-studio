@@ -32,6 +32,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<Item | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -63,7 +64,7 @@ export default function App() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [query, category]);
+  }, [query, category, refreshKey]);
 
   useEffect(() => {
     if (!selected) return;
@@ -178,7 +179,7 @@ export default function App() {
         {loading ? (
           <div className="catalog-state"><span className="loader" /><strong>Katalog yuklanmoqda</strong><p>Yangi hikoyalar tayyorlanmoqda...</p></div>
         ) : error ? (
-          <div className="catalog-state state-error"><span className="state-symbol">!</span><strong>Aloqa amalga oshmadi</strong><p>{error}</p><button className="retry-button" onClick={() => setCategory((value) => value)} type="button">Qayta urinish</button></div>
+          <div className="catalog-state state-error"><span className="state-symbol">!</span><strong>Aloqa amalga oshmadi</strong><p>{error}</p><button className="retry-button" onClick={() => setRefreshKey((value) => value + 1)} type="button">Qayta urinish</button></div>
         ) : items.length === 0 ? (
           <div className="catalog-state"><span className="state-symbol">✦</span><strong>{query ? 'Hech narsa topilmadi' : 'Katalog hozircha bo‘sh'}</strong><p>{query ? 'Boshqa nom bilan qidirib ko‘ring yoki filtrni o‘zgartiring.' : 'Yangi anime, film va seriallar tez orada qo‘shiladi.'}</p>{query && <button className="retry-button" onClick={() => setQuery('')} type="button">Qidiruvni tozalash</button>}</div>
         ) : (
