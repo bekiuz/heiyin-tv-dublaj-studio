@@ -16,6 +16,16 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
+      - name: Validate Cloudflare secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Required repository secrets are missing or unavailable to this workflow."
+            exit 1
+          fi
+          echo "Cloudflare secrets are available (values hidden)."
       - name: Ensure Cloudflare Pages project exists
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
