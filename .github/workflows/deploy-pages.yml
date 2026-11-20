@@ -77,6 +77,17 @@ jobs:
           else
             echo "TELEGRAM_ADMIN_ID not set; skipping admin secret."
           fi
+      - name: Set Telegram admin channel ID (optional)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+        run: |
+          if [ -n "$TELEGRAM_CHANNEL_ID" ]; then
+            echo "$TELEGRAM_CHANNEL_ID" | npx wrangler secret put TELEGRAM_CHANNEL_ID --config wrangler.toml
+          else
+            echo "TELEGRAM_CHANNEL_ID not set; channel video intake is disabled."
+          fi
       - name: Register Telegram webhook
         run: curl --fail-with-body -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=https://heiyin-tv-api.bekiuz67.workers.dev/telegram/webhook"
         env:
